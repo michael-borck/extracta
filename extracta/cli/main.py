@@ -51,3 +51,24 @@ def analyze(file_path, mode, output):
             json.dump(result["data"], f, indent=2)
     else:
         click.echo(json.dumps(result["data"], indent=2))
+
+
+@main.command()
+@click.option("--host", default="127.0.0.1", help="Host to bind to")
+@click.option("--port", default=8000, type=int, help="Port to bind to")
+def serve(host, port):
+    """Start the FastAPI server"""
+    try:
+        from extracta.api import create_app
+        import uvicorn
+
+        app = create_app()
+        click.echo(f"Starting server on http://{host}:{port}")
+        click.echo("Press Ctrl+C to stop")
+        uvicorn.run(app, host=host, port=port)
+
+    except ImportError:
+        click.echo(
+            "API dependencies not installed. Install with: pip install extracta[api]",
+            err=True,
+        )
