@@ -37,10 +37,10 @@ pip install -e .
 Install with specific media support:
 
 ```bash
-pip install extracta[audio]     # Audio processing
+pip install extracta[audio]     # Audio processing (faster-whisper for Apple Silicon)
 pip install extracta[video]     # Video processing
 pip install extracta[text]      # Text analysis
-pip install extracta[image]     # Image analysis
+pip install extracta[image]     # Image analysis with OCR
 pip install extracta[code]      # Code analysis
 pip install extracta[all]       # All features
 ```
