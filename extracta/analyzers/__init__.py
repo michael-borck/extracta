@@ -4,6 +4,10 @@ def get_analyzer_for_content(content_type: str):
         from .text_analyzer import TextAnalyzer
 
         return TextAnalyzer()
+    elif content_type == "image":
+        from .image_analyzer import ImageAnalyzer
 
-    # TODO: Add more analyzers (image, code, etc.)
+        return ImageAnalyzer()
+
+    # TODO: Add more analyzers (code, etc.)
     return None

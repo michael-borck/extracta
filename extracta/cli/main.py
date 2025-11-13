@@ -39,7 +39,10 @@ def analyze(file_path, mode, output):
     # Analyze content
     analyzer = get_analyzer_for_content(result["data"]["content_type"])
     if analyzer:
-        analysis = analyzer.analyze(result["data"]["raw_content"], mode)
+        if result["data"]["content_type"] == "image":
+            analysis = analyzer.analyze(result["data"]["file_path"], mode)
+        else:
+            analysis = analyzer.analyze(result["data"]["raw_content"], mode)
         result["data"]["analysis"] = analysis
 
     # Output results
