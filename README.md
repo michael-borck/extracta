@@ -64,6 +64,30 @@ result = analyzer.analyze(text, mode="research")
 print(result)
 ```
 
+### Web API
+
+Start the server:
+
+```bash
+extracta serve
+# Or with custom host/port
+extracta serve --host 0.0.0.0 --port 8000
+```
+
+API endpoints:
+
+- `POST /extract` - Extract content from uploaded file
+- `POST /analyze` - Extract and analyze content from uploaded file
+- `GET /health` - Health check
+
+Example with curl:
+
+```bash
+curl -X POST "http://localhost:8000/analyze" \
+  -F "file=@sample.txt" \
+  -F "mode=assessment"
+```
+
 ## Development
 
 ### Setup
