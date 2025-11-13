@@ -37,13 +37,43 @@ def analyze(file_path, mode, output):
         return
 
     # Analyze content
-    analyzer = get_analyzer_for_content(result["data"]["content_type"])
-    if analyzer:
-        if result["data"]["content_type"] == "image":
-            analysis = analyzer.analyze(result["data"]["file_path"], mode)
-        else:
-            analysis = analyzer.analyze(result["data"]["raw_content"], mode)
-        result["data"]["analysis"] = analysis
+    if result["data"]["content_type"] == "video":
+        # Video lens outputs textual descriptions - analyze them with text_analyzer
+        from extracta.analyzers.text_analyzer import TextAnalyzer
+
+        text_analyzer = TextAnalyzer()
+
+        # Analyze transcript
+        transcript_analysis = text_analyzer.analyze(result["data"]["transcript"], mode)
+
+        # Analyze frame descriptions as combined text
+        frame_text = " ".join(result["data"]["frame_descriptions"])
+        frame_analysis = text_analyzer.analyze(frame_text, mode)
+
+        # Analyze visual summary
+        summary_analysis = text_analyzer.analyze(result["data"]["visual_summary"], mode)
+
+        # Simple combined score (average of readability grades)
+        combined_score = (
+            transcript_analysis.get("readability", {}).get("grade_level", 8)
+            + frame_analysis.get("readability", {}).get("grade_level", 8)
+            + summary_analysis.get("readability", {}).get("grade_level", 8)
+        ) / 3
+
+        result["data"]["analysis"] = {
+            "transcript_analysis": transcript_analysis,
+            "frame_analysis": frame_analysis,
+            "summary_analysis": summary_analysis,
+            "combined_readability_grade": round(combined_score, 1),
+        }
+    else:
+        analyzer = get_analyzer_for_content(result["data"]["content_type"])
+        if analyzer:
+            if result["data"]["content_type"] == "image":
+                analysis = analyzer.analyze(result["data"]["file_path"], mode)
+            else:
+                analysis = analyzer.analyze(result["data"]["raw_content"], mode)
+            result["data"]["analysis"] = analysis
 
     # Output results
     if output:
