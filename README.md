@@ -8,8 +8,11 @@ Extracta provides a unified interface for extracting and analyzing content from 
 
 - **Modular Architecture**: Pluggable lenses for different content types
 - **Multiple Analysis Modes**: Research and assessment workflows
-- **Extensible**: Easy to add new analyzers and lenses
+- **Content Types**: Text documents, images (with OCR), extensible to video/audio
+- **Rubric-Based Assessment**: Custom rubrics for structured evaluation
+- **LLM-Enhanced Feedback**: AI-powered detailed feedback generation
 - **CLI Interface**: Command-line tool for quick analysis
+- **Web API**: REST API for integration
 - **Python API**: Programmatic access for integration
 - **Modern Python**: Built with uv, ruff, mypy, and pytest
 
@@ -62,6 +65,27 @@ from extracta import TextAnalyzer
 analyzer = TextAnalyzer()
 result = analyzer.analyze(text, mode="research")
 print(result)
+```
+
+### Grading and Assessment
+
+```python
+from extracta.grading import RubricRepository, get_default_rubric
+from extracta.grading.feedback_generator import FeedbackGenerator
+
+# Load or create a rubric
+repo = RubricRepository("rubrics")
+rubric = get_default_rubric("academic")  # or repo.load("my-rubric")
+
+# Generate feedback
+generator = FeedbackGenerator()
+feedback = generator.generate_feedback(
+    rubric=rubric,
+    analysis_data=text_analysis_result,
+    audience="student",
+    detail="summary"
+)
+print(feedback)
 ```
 
 ### Web API
@@ -174,9 +198,13 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Roadmap
 
+- [x] Text analyzer implementation
+- [x] Image analyzer with OCR
+- [x] Rubric-based assessment system
+- [x] CLI interface
+- [x] Web API interface
 - [ ] Audio lens implementation
 - [ ] Video lens implementation
-- [ ] Image analyzer implementation
 - [ ] Code analyzer implementation
-- [ ] Web API interface
 - [ ] GUI application
+- [ ] Advanced LLM feedback integration
