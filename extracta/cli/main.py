@@ -1,3 +1,4 @@
+import json
 import click
 from pathlib import Path
 from extracta.lenses import get_lens_for_file
@@ -31,21 +32,19 @@ def analyze(file_path, mode, output):
 
     # Extract content
     result = lens.extract(file_path)
-    if not result.success:
-        click.echo(f"Error: {result.error}", err=True)
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
         return
 
     # Analyze content
-    analyzer = get_analyzer_for_content(result.data["content_type"])
+    analyzer = get_analyzer_for_content(result["data"]["content_type"])
     if analyzer:
-        analysis = analyzer.analyze(result.data["raw_content"], mode)
-        result.data["analysis"] = analysis
+        analysis = analyzer.analyze(result["data"]["raw_content"], mode)
+        result["data"]["analysis"] = analysis
 
     # Output results
     if output:
-        import json
-
         with open(output, "w") as f:
-            json.dump(result.data, f, indent=2)
+            json.dump(result["data"], f, indent=2)
     else:
-        click.echo(json.dumps(result.data, indent=2))
+        click.echo(json.dumps(result["data"], indent=2))
