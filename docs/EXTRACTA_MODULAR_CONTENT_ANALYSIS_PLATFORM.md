@@ -430,30 +430,54 @@ Core principle: **Extract once, analyze many ways**
 
 ## Layer 3: Assessment & Feedback
 
-### Currently Implemented
+### Shared Assessment Infrastructure
 
-#### rubric_manager
+#### rubric_manager (Shared)
 **Status:** ✅ Implemented
 
+- Core rubric system shared across all content types
 - Custom rubric creation and management
 - Scoring scale configuration
 - Assessment result calculation
 - Repository for storing rubrics
 
-#### feedback_generator
+#### feedback_generator (Shared)
 **Status:** ✅ Implemented (basic)
 
 - Template-based feedback generation
 - Audience-specific messaging
 - Integration with analysis results
 
-#### default_rubrics
+### Content-Specific Assessment
+
+#### Lens-Specific Rubrics
+**Status:** ✅ Implemented (video_lens example)
+
+Each lens package can include content-specific rubrics and assessment helpers:
+
+```python
+# video_lens/rubrics.py
+from ..rubric_manager import Rubric, RubricBuilder
+
+def create_video_presentation_rubric() -> Rubric:
+    # Video-specific rubric with delivery, content, technical criteria
+
+def assess_video_content(analysis_results, rubric):
+    # Video-specific assessment logic that knows how to map
+    # analysis results to rubric criteria
+```
+
+**Benefits:**
+- Content-specific rubric templates
+- Lens packages are more self-contained
+- Specialized assessment logic per content type
+- Shared core rubric infrastructure
+
+#### default_rubrics (Shared + Lens-Specific)
 **Status:** ✅ Implemented
 
-- Academic content rubric
-- Business content rubric
-- Creative content rubric
-- General content rubric
+- **Shared:** Academic, business, creative, general rubrics
+- **Lens-specific:** Video presentation, audio quality, image design, etc.
 
 ---
 
