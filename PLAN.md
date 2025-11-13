@@ -77,7 +77,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-audio = ["whisper-openai>=1.1.0", "librosa>=0.10.0"]
+audio = ["faster-whisper>=1.0.0", "librosa>=0.10.0"]
 video = ["opencv-python>=4.8.0", "ffmpeg-python>=0.2.0"]
 text = ["spacy>=3.7.0", "nltk>=3.8.0", "textstat>=0.7.0"]
 image = ["pillow>=10.0.0", "torch>=2.0.0"]
