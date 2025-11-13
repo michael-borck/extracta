@@ -260,7 +260,7 @@ class VideoProcessor:
         output_path: Path,
     ) -> Path:
         """
-        Extract audio from video file using AudioLens.
+        Extract audio from video file.
 
         Args:
             video_info: VideoInfo object from validated video file
@@ -272,10 +272,46 @@ class VideoProcessor:
         Raises:
             AudioProcessingError: If audio extraction fails
         """
-        from ..audio_lens import AudioLens
+        from .exceptions import AudioProcessingError
 
-        audio_lens = AudioLens()
-        return audio_lens.extract_audio_from_video(video_info.file_path, output_path)
+        try:
+            # Ensure output directory exists
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Extract audio using ffmpeg
+            stream = ffmpeg.input(str(video_info.file_path))
+            stream = ffmpeg.output(
+                stream,
+                str(output_path),
+                acodec="mp3",  # Convert to MP3
+                ab="128k",  # 128kbps bitrate
+                f="mp3",
+            )
+            stream = ffmpeg.overwrite_output(stream)
+
+            # Execute extraction
+            ffmpeg.run(stream, quiet=True, capture_stdout=True, capture_stderr=True)
+
+            if not output_path.exists():
+                raise AudioProcessingError(
+                    message="Audio extraction completed but output file not found",
+                    file_path=video_info.file_path,
+                )
+
+            return output_path
+
+        except ffmpeg.Error as e:
+            from .exceptions import handle_ffmpeg_error
+
+            raise handle_ffmpeg_error(
+                e, "audio extraction", video_info.file_path
+            ) from e
+        except Exception as e:
+            raise AudioProcessingError(
+                message=f"Unexpected error during audio extraction: {str(e)}",
+                file_path=video_info.file_path,
+                cause=e,
+            ) from e
 
     def is_format_supported(self, file_path: Path | str) -> bool:
         """Check if video file format is supported."""

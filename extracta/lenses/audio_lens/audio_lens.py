@@ -100,33 +100,36 @@ class AudioLens(BaseLens):
         except ffmpeg.Error as e:
             raise RuntimeError(f"Failed to probe audio file: {e}") from e
 
-    def extract_audio_from_video(self, video_path: Path, output_path: Path) -> Path:
-        """Extract audio from video file."""
+    def prepare_audio_for_transcription(
+        self, audio_path: Path, output_path: Path
+    ) -> Path:
+        """Prepare audio file for transcription (convert to optimal format)."""
         try:
             # Ensure output directory exists
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Extract audio using ffmpeg
-            stream = ffmpeg.input(str(video_path))
+            # Convert to WAV for better transcription compatibility
+            stream = ffmpeg.input(str(audio_path))
             stream = ffmpeg.output(
                 stream,
                 str(output_path),
-                acodec="mp3",  # Convert to MP3
-                ab="128k",  # 128kbps bitrate
-                f="mp3",
+                acodec="pcm_s16le",  # 16-bit PCM
+                ar="16000",  # 16kHz sample rate (good for speech)
+                ac=1,  # Mono
+                f="wav",
             )
             stream = ffmpeg.overwrite_output(stream)
 
-            # Execute extraction
+            # Execute conversion
             ffmpeg.run(stream, quiet=True, capture_stdout=True, capture_stderr=True)
 
             if not output_path.exists():
-                raise RuntimeError("Audio extraction failed - output file not created")
+                raise RuntimeError("Audio preparation failed - output file not created")
 
             return output_path
 
         except ffmpeg.Error as e:
-            raise RuntimeError(f"Audio extraction failed: {e}") from e
+            raise RuntimeError(f"Audio preparation failed: {e}") from e
 
     def prepare_for_transcription(self, audio_path: Path, output_path: Path) -> Path:
         """Prepare audio file for transcription (convert to WAV format)."""
