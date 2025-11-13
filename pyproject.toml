@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "extracta"
 version = "0.1.0"
 description = "Modular content analysis and insight generation"
-authors = [{name = "Extracta Team"}]
+authors = [{name = "Michael Borck", email = "michael@borck.dev"}]
 license = {text = "MIT"}
 requires-python = ">=3.10"
 dependencies = [
