@@ -7,9 +7,27 @@ from extracta.analyzers import get_analyzer_for_content
 
 @click.group()
 @click.version_option()
-def main():
+@click.option(
+    "--log-level",
+    default="INFO",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+    help="Set logging level",
+)
+@click.option("--log-file", type=click.Path(), help="Log to file")
+@click.option(
+    "--verbose", "-v", is_flag=True, help="Verbose output (sets log level to DEBUG)"
+)
+def main(log_level, log_file, verbose):
     """Extracta - Modular content analysis and insight generation"""
-    pass
+    # Setup logging
+    if verbose:
+        log_level = "DEBUG"
+
+    from extracta.shared.logging_config import setup_logging
+
+    setup_logging(
+        level=log_level, log_file=Path(log_file) if log_file else None, console=True
+    )
 
 
 # Content-type specific subcommands

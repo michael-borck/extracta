@@ -4,6 +4,7 @@ from typing import Dict, Any
 import time
 
 from .base import LLMProvider, LLMConfig, LLMResponse, registry
+from ..error_handling import APIError, ConfigurationError
 
 
 class GeminiProvider(LLMProvider):
@@ -21,8 +22,13 @@ class GeminiProvider(LLMProvider):
             genai.configure(api_key=self.config.api_key)
             self._client = genai.GenerativeModel(self.config.model or "gemini-pro")
         except ImportError:
-            raise ImportError(
-                "google-generativeai package is required for Gemini provider"
+            raise ConfigurationError(
+                "Google Generative AI package is required for Gemini provider",
+                details={
+                    "provider": "gemini",
+                    "missing_package": "google-generativeai",
+                },
+                suggestions=["Install with: pip install google-generativeai"],
             )
 
     def generate_response(self, prompt: str, **kwargs) -> LLMResponse:

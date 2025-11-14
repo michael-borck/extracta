@@ -7,6 +7,12 @@ from pathlib import Path
 
 from ..base_analyzer import BaseAnalyzer
 from ...shared.llm_providers import LLMConfig, registry
+from ...shared.error_handling import (
+    error_handler,
+    APIError,
+    ConfigurationError,
+    ValidationError,
+)
 
 
 class ConversationAnalyzer(BaseAnalyzer):
