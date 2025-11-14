@@ -48,6 +48,18 @@ class ImageLens(BaseLens):
                     data["ocr_text"] = ocr_result.full_text
                     data["ocr_regions"] = len(ocr_result.text_regions)
                     data["ocr_confidence"] = ocr_result.average_confidence
+
+                    # Apply cascading analysis for code detection in OCR text
+                    if ocr_result.full_text.strip():
+                        from .. import analyze_extracted_content
+
+                        ocr_data = {"raw_content": ocr_result.full_text}
+                        enhanced_ocr = analyze_extracted_content(ocr_data)
+                        if "cascading_analysis" in enhanced_ocr:
+                            data["ocr_cascading_analysis"] = enhanced_ocr[
+                                "cascading_analysis"
+                            ]
+
                 except Exception as e:
                     # OCR failed, but don't fail the whole extraction
                     data["ocr_error"] = str(e)

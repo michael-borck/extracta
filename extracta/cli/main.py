@@ -38,9 +38,95 @@ def code():
 
 
 @main.group()
+def presentation():
+    """Presentation content analysis commands"""
+    pass
+
+
+@main.group()
+def repo():
+    """Repository analysis commands"""
+    pass
+
+
+@main.group()
+def citation():
+    """Citation and reference analysis commands"""
+    pass
+
+
+@main.group()
 def rubric():
     """Rubric management commands"""
     pass
+
+
+@citation.command("analyze")
+@click.argument("file_path", type=click.Path(exists=True))
+@click.option(
+    "--mode", type=click.Choice(["research", "assessment"]), default="assessment"
+)
+@click.option("--output", "-o", type=click.Path())
+def citation_analyze(file_path, mode, output):
+    """Analyze citations and references in academic documents"""
+    from extracta.lenses import get_lens_for_file
+    from extracta.analyzers.citation_analyzer import CitationAnalyzer
+    from extracta.analyzers.reference_analyzer import ReferenceAnalyzer
+    from extracta.analyzers.url_analyzer import URLAnalyzer
+
+    file_path = Path(file_path)
+
+    # Get appropriate lens
+    lens = get_lens_for_file(file_path)
+    if not lens:
+        click.echo(f"No lens available for {file_path.suffix}", err=True)
+        return
+
+    click.echo(f"Analyzing citations in {file_path.name}...")
+
+    # Extract content
+    result = lens.extract(file_path)
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        return
+
+    # Get text content for analysis
+    text_content = ""
+    if "raw_content" in result["data"]:
+        text_content = result["data"]["raw_content"]
+    elif "content" in result["data"]:
+        text_content = result["data"]["content"]
+    else:
+        click.echo("No text content found for citation analysis", err=True)
+        return
+
+    # Run citation analysis
+    citation_analyzer = CitationAnalyzer()
+    citation_result = citation_analyzer.analyze(text_content, mode)
+
+    # Run reference analysis
+    reference_analyzer = ReferenceAnalyzer()
+    reference_result = reference_analyzer.analyze(text_content, mode)
+
+    # Run URL analysis
+    url_analyzer = URLAnalyzer()
+    url_result = url_analyzer.analyze(text_content, mode)
+
+    # Combine results
+    combined_result = {
+        "file_analysis": result["data"],
+        "citation_analysis": citation_result["citation_analysis"],
+        "reference_analysis": reference_result["reference_analysis"],
+        "url_analysis": url_result["url_analysis"],
+    }
+
+    # Output results
+    if output:
+        with open(output, "w") as f:
+            json.dump(combined_result, f, indent=2)
+        click.echo(f"Results saved to {output}")
+    else:
+        click.echo(json.dumps(combined_result, indent=2))
 
 
 @main.command()
@@ -49,12 +135,23 @@ def rubric():
     "--mode", type=click.Choice(["research", "assessment"]), default="assessment"
 )
 @click.option("--output", "-o", type=click.Path())
-def analyze(file_path, mode, output):
+@click.option(
+    "--cascade/--no-cascade",
+    default=True,
+    help="Enable cascading analysis for code detection",
+)
+@click.option(
+    "--semantic",
+    is_flag=True,
+    help="Use semantic routing (videos can be treated as presentations)",
+)
+def analyze(file_path, mode, output, cascade, semantic):
     """Analyze content from file"""
     file_path = Path(file_path)
 
-    # Get appropriate lens
-    lens = get_lens_for_file(file_path)
+    # Get appropriate lens (with semantic routing option)
+    semantic_mode = "semantic" if semantic else "technical"
+    lens = get_lens_for_file(file_path, semantic_mode=semantic_mode)
     if not lens:
         click.echo(f"No lens available for {file_path.suffix}", err=True)
         return
@@ -66,6 +163,12 @@ def analyze(file_path, mode, output):
     if not result["success"]:
         click.echo(f"Error: {result['error']}", err=True)
         return
+
+    # Apply cascading analysis if enabled
+    if cascade:
+        from extracta.lenses import analyze_extracted_content
+
+        result["data"] = analyze_extracted_content(result["data"])
 
     # Analyze content
     if result["data"]["content_type"] == "video":
@@ -298,6 +401,75 @@ def code_analyze(file_path, mode, output):
     if "content" in result["data"]:
         analysis = text_analyzer.analyze(result["data"]["content"], mode)
         result["data"]["analysis"] = analysis
+
+    # Output results
+    if output:
+        with open(output, "w") as f:
+            json.dump(result["data"], f, indent=2)
+        click.echo(f"Results saved to {output}")
+    else:
+        click.echo(json.dumps(result["data"], indent=2))
+
+
+@presentation.command("analyze")
+@click.argument("file_path", type=click.Path(exists=True))
+@click.option(
+    "--mode", type=click.Choice(["research", "assessment"]), default="assessment"
+)
+@click.option("--output", "-o", type=click.Path())
+@click.option("--extract-images", is_flag=True, help="Extract images from slides")
+@click.option("--render-slides", is_flag=True, help="Render slides as images")
+@click.option(
+    "--cascade/--no-cascade",
+    default=True,
+    help="Enable cascading analysis for code detection",
+)
+def presentation_analyze(
+    file_path, mode, output, extract_images, render_slides, cascade
+):
+    """Analyze presentation content"""
+    file_path = Path(file_path)
+
+    # Force presentation lens
+    from extracta.lenses.presentation_lens import PresentationLens
+
+    lens = PresentationLens(extract_images=extract_images, render_slides=render_slides)
+
+    click.echo(f"Analyzing presentation {file_path.name}...")
+
+    # Extract content
+    result = lens.extract(file_path)
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        return
+
+    # Analyze slide text with text analyzer
+    from extracta.analyzers.text_analyzer import TextAnalyzer
+
+    text_analyzer = TextAnalyzer()
+
+    # Analyze slide text
+    if result["data"].get("slide_text"):
+        slide_analysis = text_analyzer.analyze(result["data"]["slide_text"], mode)
+        result["data"]["slide_analysis"] = slide_analysis
+
+    # Apply cascading analysis if enabled
+    if cascade:
+        from extracta.lenses import analyze_extracted_content
+
+        result["data"] = analyze_extracted_content(result["data"])
+
+    # Analyze presenter notes separately
+    if result["data"].get("presenter_notes"):
+        notes_analysis = text_analyzer.analyze(result["data"]["presenter_notes"], mode)
+        result["data"]["notes_analysis"] = notes_analysis
+
+    # Add presentation structure analysis
+    if hasattr(lens, "analyze_presentation_structure"):
+        structure_analysis = lens.analyze_presentation_structure(
+            result["data"]["slides_content"]
+        )
+        result["data"]["structure_analysis"] = structure_analysis
 
     # Output results
     if output:

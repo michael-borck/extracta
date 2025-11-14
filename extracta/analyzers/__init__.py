@@ -11,3 +11,24 @@ def get_analyzer_for_content(content_type: str):
 
     # TODO: Add more analyzers (code, etc.)
     return None
+
+
+def get_citation_analyzer():
+    """Get citation analyzer for academic integrity checking"""
+    from .citation_analyzer import CitationAnalyzer
+
+    return CitationAnalyzer()
+
+
+def get_reference_analyzer():
+    """Get reference analyzer for bibliography validation"""
+    from .reference_analyzer import ReferenceAnalyzer
+
+    return ReferenceAnalyzer()
+
+
+def get_url_analyzer():
+    """Get URL analyzer for web reference validation"""
+    from .url_analyzer import URLAnalyzer
+
+    return URLAnalyzer()
