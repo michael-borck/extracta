@@ -1,20 +1,19 @@
 # Extracta
 
-Modular content analysis and insight generation toolkit for research and assessment.
+**Modular Content Analysis Platform** for research, assessment, and academic integrity checking.
 
-Extracta provides a unified interface for extracting and analyzing content from various media types including audio, video, text, images, and code. It supports both research-focused deep analysis and assessment-oriented quality evaluation.
+Extracta provides a unified interface for extracting and analyzing content from diverse media types including documents, images, repositories, and web content. It supports both research-focused deep analysis and assessment-oriented quality evaluation, with specialized tools for academic integrity validation.
 
-## Features
+## ✨ Key Features
 
-- **Modular Architecture**: Pluggable lenses for different content types
-- **Multiple Analysis Modes**: Research and assessment workflows
-- **Content Types**: Text documents, images (with OCR), extensible to video/audio
-- **Rubric-Based Assessment**: Custom rubrics for structured evaluation
-- **LLM-Enhanced Feedback**: AI-powered detailed feedback generation
-- **CLI Interface**: Command-line tool for quick analysis
-- **Web API**: REST API for integration
-- **Python API**: Programmatic access for integration
-- **Modern Python**: Built with uv, ruff, mypy, and pytest
+- **🧩 Modular Architecture**: Pluggable lenses and analyzers for different content types
+- **📚 Academic Integrity**: Citation-reference validation, bibliography checking, URL verification
+- **🔍 Multiple Analysis Modes**: Research and assessment workflows
+- **📄 Rich Content Support**: Text, images, documents, repositories, presentations, spreadsheets
+- **🎯 Rubric-Based Assessment**: Custom rubrics for structured evaluation
+- **🤖 Intelligent Analysis**: Pattern detection, quality scoring, integrity validation
+- **💻 Multiple Interfaces**: CLI, Python API, and Web API
+- **🔧 Modern Python**: Built with uv, ruff, mypy, and pytest
 
 ## Installation
 
@@ -34,14 +33,16 @@ pip install -e .
 
 ### Optional Dependencies
 
-Install with specific media support:
+Install with specific feature support:
 
 ```bash
 pip install extracta[audio]     # Audio processing (faster-whisper for Apple Silicon)
 pip install extracta[video]     # Video processing
-pip install extracta[text]      # Text analysis
+pip install extracta[text]      # Enhanced text analysis (spaCy, NLTK)
 pip install extracta[image]     # Image analysis with OCR
 pip install extracta[code]      # Code analysis
+pip install extracta[citation]  # Academic integrity (CrossRef, URL validation)
+pip install extracta[api]       # Web API server (FastAPI, Uvicorn)
 pip install extracta[all]       # All features
 ```
 
@@ -49,68 +50,108 @@ pip install extracta[all]       # All features
 
 ### Command Line
 
+#### Basic Content Analysis
 ```bash
-# Analyze audio file for research
-extracta analyze interview.mp3 --mode research
+# Analyze document for research insights
+extracta analyze research_paper.pdf --mode research --output analysis.json
 
-# Assess text quality
-extracta analyze essay.pdf --mode assessment --output results.json
+# Assess student submission quality
+extracta analyze essay.docx --mode assessment --output feedback.json
+
+# Analyze repository structure and content
+extracta analyze https://github.com/user/repo --mode assessment
+```
+
+#### Academic Integrity Checking
+```bash
+# Comprehensive citation and reference validation
+extracta citation analyze student_paper.pdf --output integrity_check.json
+
+# Results include:
+# - Citation-reference relationship validation
+# - Bibliography padding detection
+# - URL accessibility and domain reputation
+# - Academic integrity scoring
+# - Suspicious pattern detection
 ```
 
 ### Python API
 
+#### Basic Content Analysis
 ```python
 from extracta import TextAnalyzer
 
 analyzer = TextAnalyzer()
-result = analyzer.analyze(text, mode="research")
+result = analyzer.analyze(text_content, mode="research")
 print(result)
+```
+
+#### Academic Integrity Analysis
+```python
+from extracta.analyzers import CitationAnalyzer, ReferenceAnalyzer, URLAnalyzer
+
+# Citation-reference validation
+citation_analyzer = CitationAnalyzer()
+citation_result = citation_analyzer.analyze(document_text)
+
+# Bibliography quality assessment
+reference_analyzer = ReferenceAnalyzer()
+reference_result = reference_analyzer.analyze(document_text)
+
+# URL validation and reputation checking
+url_analyzer = URLAnalyzer()
+url_result = url_analyzer.analyze(document_text)
+
+# Combined integrity score (0-100)
+integrity_score = citation_result['citation_analysis']['academic_integrity_score']
+print(f"Academic Integrity Score: {integrity_score}/100")
 ```
 
 ### Grading and Assessment
 
 ```python
-from extracta.grading import RubricRepository, get_default_rubric
+from extracta.grading.rubric_manager import RubricRepository, get_default_rubric
 from extracta.grading.feedback_generator import FeedbackGenerator
 
 # Load or create a rubric
 repo = RubricRepository("rubrics")
 rubric = get_default_rubric("academic")  # or repo.load("my-rubric")
 
-# Generate feedback
+# Generate feedback based on analysis results
 generator = FeedbackGenerator()
 feedback = generator.generate_feedback(
     rubric=rubric,
-    analysis_data=text_analysis_result,
+    analysis_data=analysis_result,
     audience="student",
-    detail="summary"
+    detail="detailed"
 )
-print(feedback)
 ```
 
-### Web API
+## 🎓 Academic Integrity Features
 
-Start the server:
+Extracta provides comprehensive tools for detecting academic integrity issues and validating scholarly work:
 
-```bash
-extracta serve
-# Or with custom host/port
-extracta serve --host 0.0.0.0 --port 8000
-```
+### Citation Analysis
+- **Citation-Reference Validation**: Ensures all references have corresponding in-text citations
+- **Bibliography Padding Detection**: Identifies references without citations
+- **Citation Stuffing Detection**: Flags excessive citations in single sentences
+- **Style Recognition**: Supports APA, MLA, Chicago, Harvard, and Numeric styles
 
-API endpoints:
+### Reference Validation
+- **DOI Verification**: Validates Digital Object Identifiers with CrossRef API
+- **URL Accessibility**: Checks if referenced URLs are accessible (404 detection)
+- **Domain Reputation**: Analyzes source credibility (academic vs. commercial domains)
+- **Format Validation**: Ensures proper reference formatting and completeness
 
-- `POST /extract` - Extract content from uploaded file
-- `POST /analyze` - Extract and analyze content from uploaded file
-- `GET /health` - Health check
+### Repository Analysis
+- **WordPress Detection**: Identifies WordPress projects and analyzes themes/plugins
+- **Code Quality Assessment**: Evaluates repository structure and practices
+- **File Type Analysis**: Comprehensive analysis of all repository contents
 
-Example with curl:
-
-```bash
-curl -X POST "http://localhost:8000/analyze" \
-  -F "file=@sample.txt" \
-  -F "mode=assessment"
-```
+### Integrity Scoring
+- **Academic Integrity Score**: 0-100 scale based on multiple validation criteria
+- **Detailed Reporting**: Specific issues and recommendations
+- **Pattern Detection**: Identifies suspicious citation and reference patterns
 
 ## Development
 
@@ -171,8 +212,23 @@ twine upload dist/* --repository pypi
 extracta/
 ├── extracta/
 │   ├── lenses/              # Content extraction modules
+│   │   ├── audio_lens/      # Audio file processing
+│   │   ├── video_lens/      # Video file processing
+│   │   ├── image_lens/      # Image processing with OCR
+│   │   ├── document_lens/   # Text & Office document processing
+│   │   ├── presentation_lens/ # Presentation file analysis
+│   │   ├── repo_lens/       # Repository-level analysis
+│   │   └── base_lens.py     # Common lens interface
 │   ├── analyzers/           # Content analysis modules
+│   │   ├── text_analyzer/   # Text quality and readability
+│   │   ├── image_analyzer/  # Image quality assessment
+│   │   ├── citation_analyzer/ # Citation-reference validation
+│   │   ├── reference_analyzer/ # Bibliography quality assessment
+│   │   ├── url_analyzer/    # URL validation and reputation
+│   │   └── base_analyzer.py # Common analyzer interface
 │   ├── grading/             # Assessment and grading
+│   │   ├── rubric_manager/  # Rubric creation and management
+│   │   └── feedback_generator.py # AI-powered feedback
 │   ├── orchestration/       # Workflow management
 │   ├── shared/              # Common utilities
 │   └── cli/                 # Command-line interface
@@ -196,15 +252,31 @@ extracta/
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## Roadmap
+## 🚀 Current Status & Roadmap
 
-- [x] Text analyzer implementation
-- [x] Image analyzer with OCR
-- [x] Rubric-based assessment system
-- [x] CLI interface
-- [x] Web API interface
-- [ ] Audio lens implementation
-- [ ] Video lens implementation
-- [ ] Code analyzer implementation
-- [ ] GUI application
-- [ ] Advanced LLM feedback integration
+### ✅ Implemented Features
+- [x] **Text Analysis**: Readability, sentiment, vocabulary, quality metrics
+- [x] **Image Analysis**: OCR, quality assessment, accessibility
+- [x] **Document Processing**: PDF, DOCX, Office docs (PPTX, Excel, CSV)
+- [x] **Citation Validation**: Citation-reference relationships, academic integrity
+- [x] **Reference Analysis**: Bibliography quality, DOI validation, CrossRef integration
+- [x] **URL Validation**: Accessibility checking, domain reputation, robots.txt
+- [x] **Repository Analysis**: GitHub repo analysis, WordPress detection
+- [x] **Rubric System**: Custom rubrics, structured assessment
+- [x] **CLI Interface**: Multiple commands for different analysis types
+- [x] **Web API**: REST API for integration
+- [x] **Python API**: Programmatic access
+
+### 🔄 In Development
+- [ ] **Audio Lens**: Speech-to-text, audio quality analysis
+- [ ] **Video Lens**: Frame analysis, transcript processing
+- [ ] **Code Analyzer**: Code quality metrics, best practices
+- [ ] **Screenshot Integration**: Visual URL validation
+- [ ] **Wayback Machine**: Archive URL checking
+
+### 📋 Future Enhancements
+- [ ] **GUI Application**: Web-based interface
+- [ ] **LMS Integration**: Canvas, Blackboard, Moodle
+- [ ] **Advanced ML Models**: Fine-tuned for educational content
+- [ ] **Collaborative Features**: Multi-user assessment workflows
+- [ ] **Plugin Architecture**: Custom lenses and analyzers
