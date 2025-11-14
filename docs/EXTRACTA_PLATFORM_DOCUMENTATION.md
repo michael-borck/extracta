@@ -1587,6 +1587,144 @@ extracta analyze screencast.mp4 --semantic  # Treats video as presentation
 
 ---
 
+## Design Decisions and Clarifications
+
+### API Design & Architecture
+
+**FastAPI Integration Strategy:**
+- The FastAPI server mirrors all CLI functionality as REST endpoints
+- Each CLI command becomes an API endpoint (e.g., `POST /analyze`, `POST /citation/analyze`)
+- Request/response schemas follow the same structure as CLI inputs/outputs
+- API serves as the backend for all UI implementations
+
+**UI Distribution Strategy:**
+- **Maximum Flexibility**: Support multiple UI approaches simultaneously
+- **TUI/GUI**: Import Python modules directly for local desktop applications
+- **Web UIs**: React, Gradio, or other frameworks calling API endpoints
+- **Electron Apps**: Embed Python server in cross-platform desktop applications
+- **Docker Deployment**: Containerized API server for local or remote hosting
+- **VPS Hosting**: Web server versions behind proxies or on cloud instances
+
+**Schema Design:**
+- Request/response validation using Pydantic models
+- Consistent with CLI parameter structures
+- Future enhancement: Comprehensive OpenAPI documentation
+
+### Data Persistence Strategy
+
+**Privacy-First Approach:**
+- **No Built-in Storage**: Core system does not persist data or results
+- **Report Generation Only**: System ingests documents and generates analysis reports
+- **User Control**: Output saved to user-specified locations (CLI) or handled by UI applications
+- **UI Responsibility**: Advanced UIs can implement database storage, trend tracking, comparisons
+- **Grading/Rubric**: Proof-of-concept only, not intended for production assessment systems
+
+**Session Management:**
+- **Stateless Design**: Each analysis is independent
+- **No Server-Side Sessions**: All state managed by client applications
+- **Batch Processing**: Multiple files processed in single CLI command or API call
+
+### Multi-Language Support
+
+**Current Scope:**
+- **English-Only**: Designed for English-first academic environment
+- **Language Detection**: Important to identify non-English content for instructor investigation
+- **Future Enhancement**: Multi-language support as institutional needs evolve
+
+**LLM Prompt Strategy:**
+- **English Prompts**: All LLM interactions use English system prompts
+- **Content Analysis**: LLMs can process non-English content but respond in English
+- **Detection Only**: Flag non-English content rather than translate/analyze
+
+### Extension Points & Plugin Architecture
+
+**Custom Lenses & Analyzers:**
+- **Plugin System**: Future enhancement to allow user-defined lenses and analyzers
+- **Registration Mechanism**: Dynamic loading of custom components
+- **Current Limitation**: Would require architectural redesign to make existing components pluggable
+
+**Rubric Creation Workflow:**
+- **Assignment Mapping**: Upload assignment specifications to auto-generate rubrics
+- **Existing Rubric Import**: Parse and map external rubric formats to internal structure
+- **Customization**: Edit generated rubrics to match institutional standards
+- **Template-Based**: Start with defaults and modify for specific needs
+
+**Proof-of-Concept Focus:**
+- **Orchestration UIs**: Demonstrate capabilities without full production implementation
+- **Privacy Considerations**: User retains full control over data and analysis results
+- **Modular Design**: Easy to extend or replace components as needs evolve
+
+---
+
+## Design Decisions and Clarifications
+
+### API Design & Architecture
+
+**FastAPI Integration Strategy:**
+- The FastAPI server mirrors all CLI functionality as REST endpoints
+- Each CLI command becomes an API endpoint (e.g., `POST /analyze`, `POST /citation/analyze`)
+- Request/response schemas follow the same structure as CLI inputs/outputs
+- API serves as the backend for all UI implementations
+
+**UI Distribution Strategy:**
+- **Maximum Flexibility**: Support multiple UI approaches simultaneously
+- **TUI/GUI**: Import Python modules directly for local desktop applications
+- **Web UIs**: React, Gradio, or other frameworks calling API endpoints
+- **Electron Apps**: Embed Python server in cross-platform desktop applications
+- **Docker Deployment**: Containerized API server for local or remote hosting
+- **VPS Hosting**: Web server versions behind proxies or on cloud instances
+
+**Schema Design:**
+- Request/response validation using Pydantic models
+- Consistent with CLI parameter structures
+- Future enhancement: Comprehensive OpenAPI documentation
+
+### Data Persistence Strategy
+
+**Privacy-First Approach:**
+- **No Built-in Storage**: Core system does not persist data or results
+- **Report Generation Only**: System ingests documents and generates analysis reports
+- **User Control**: Output saved to user-specified locations (CLI) or handled by UI applications
+- **UI Responsibility**: Advanced UIs can implement database storage, trend tracking, comparisons
+- **Grading/Rubric**: Proof-of-concept only, not intended for production assessment systems
+
+**Session Management:**
+- **Stateless Design**: Each analysis is independent
+- **No Server-Side Sessions**: All state managed by client applications
+- **Batch Processing**: Multiple files processed in single CLI command or API call
+
+### Multi-Language Support
+
+**Current Scope:**
+- **English-Only**: Designed for English-first academic environment
+- **Language Detection**: Important to identify non-English content for instructor investigation
+- **Future Enhancement**: Multi-language support as institutional needs evolve
+
+**LLM Prompt Strategy:**
+- **English Prompts**: All LLM interactions use English system prompts
+- **Content Analysis**: LLMs can process non-English content but respond in English
+- **Detection Only**: Flag non-English content rather than translate/analyze
+
+### Extension Points & Plugin Architecture
+
+**Custom Lenses & Analyzers:**
+- **Plugin System**: Future enhancement to allow user-defined lenses and analyzers
+- **Registration Mechanism**: Dynamic loading of custom components
+- **Current Limitation**: Would require architectural redesign to make existing components pluggable
+
+**Rubric Creation Workflow:**
+- **Assignment Mapping**: Upload assignment specifications to auto-generate rubrics
+- **Existing Rubric Import**: Parse and map external rubric formats to internal structure
+- **Customization**: Edit generated rubrics to match institutional standards
+- **Template-Based**: Start with defaults and modify for specific needs
+
+**Proof-of-Concept Focus:**
+- **Orchestration UIs**: Demonstrate capabilities without full production implementation
+- **Privacy Considerations**: User retains full control over data and analysis results
+- **Modular Design**: Easy to extend or replace components as needs evolve
+
+---
+
 ## Glossary
 
 - **Lens:** Content ingestion component that extracts standardized textual descriptions
