@@ -1279,6 +1279,12 @@ python -m extracta.cli analyze ../test-files/sample.mp3
 - **Use Case**: Flag potentially outdated web references in academic work
 - **Status**: Research needed, planned for Phase 2.5
 
+##### URL-Based Conversation Analysis
+- **Purpose**: Direct analysis of AI conversations from URLs without file downloads
+- **Implementation**: Web scraping integration for ChatGPT share links, Claude conversation URLs
+- **Use Case**: Real-time analysis of student AI interactions without requiring file exports
+- **Status**: Web scraping research needed, planned for Phase 2.5
+
 ### Code Lens Advanced Features
 
 #### ✅ Implemented Features

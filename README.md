@@ -7,11 +7,12 @@ Extracta provides a unified interface for extracting and analyzing content from 
 ## ✨ Key Features
 
 - **🧩 Modular Architecture**: Pluggable lenses and analyzers for different content types
-- **📚 Academic Integrity**: Citation-reference validation, bibliography checking, URL verification
+- **📚 Academic Integrity**: Citation-reference validation, bibliography checking, URL verification, AI conversation analysis
+- **🤖 AI Conversation Analysis**: Cognitive intent classification for AI-assisted learning assessment
 - **🔍 Multiple Analysis Modes**: Research and assessment workflows
-- **📄 Rich Content Support**: Text, images, documents, repositories, presentations, spreadsheets
+- **📄 Rich Content Support**: Text, images, documents, repositories, presentations, spreadsheets, AI conversations
 - **🎯 Rubric-Based Assessment**: Custom rubrics for structured evaluation
-- **🤖 Intelligent Analysis**: Pattern detection, quality scoring, integrity validation
+- **🧠 Intelligent Analysis**: Pattern detection, quality scoring, integrity validation, learning pattern recognition
 - **💻 Multiple Interfaces**: CLI, Python API, and Web API
 - **🔧 Modern Python**: Built with uv, ruff, mypy, and pytest
 
@@ -67,12 +68,15 @@ extracta analyze https://github.com/user/repo --mode assessment
 # Comprehensive citation and reference validation
 extracta citation analyze student_paper.pdf --output integrity_check.json
 
+# AI conversation cognitive intent analysis
+extracta citation conversation chatgpt_export.json --output learning_analysis.json
+
 # Results include:
 # - Citation-reference relationship validation
 # - Bibliography padding detection
 # - URL accessibility and domain reputation
+# - AI conversation learning pattern analysis
 # - Academic integrity scoring
-# - Suspicious pattern detection
 ```
 
 ### Python API
@@ -88,7 +92,7 @@ print(result)
 
 #### Academic Integrity Analysis
 ```python
-from extracta.analyzers import CitationAnalyzer, ReferenceAnalyzer, URLAnalyzer
+from extracta.analyzers import CitationAnalyzer, ReferenceAnalyzer, URLAnalyzer, ConversationAnalyzer
 
 # Citation-reference validation
 citation_analyzer = CitationAnalyzer()
@@ -102,9 +106,15 @@ reference_result = reference_analyzer.analyze(document_text)
 url_analyzer = URLAnalyzer()
 url_result = url_analyzer.analyze(document_text)
 
-# Combined integrity score (0-100)
+# AI conversation cognitive intent analysis
+conversation_analyzer = ConversationAnalyzer()
+conversation_result = conversation_analyzer.analyze(conversation_json_data)
+
+# Combined integrity score
 integrity_score = citation_result['citation_analysis']['academic_integrity_score']
+learning_quality = conversation_result['conversation_analysis']['learning_assessment']['learning_quality_score']
 print(f"Academic Integrity Score: {integrity_score}/100")
+print(f"AI Learning Quality Score: {learning_quality}/100")
 ```
 
 ### Grading and Assessment
@@ -142,6 +152,12 @@ Extracta provides comprehensive tools for detecting academic integrity issues an
 - **URL Accessibility**: Checks if referenced URLs are accessible (404 detection)
 - **Domain Reputation**: Analyzes source credibility (academic vs. commercial domains)
 - **Format Validation**: Ensures proper reference formatting and completeness
+
+### AI Conversation Analysis
+- **Cognitive Intent Classification**: Uses Gemini LLM to classify user prompts as Delegation vs. Scaffolding
+- **Learning Pattern Recognition**: Analyzes conversation flow for active learning behaviors
+- **Session Quality Scoring**: Provides learning quality assessment (0-100)
+- **Platform Support**: ChatGPT, Claude, Bard, and generic conversation formats
 
 ### Repository Analysis
 - **WordPress Detection**: Identifies WordPress projects and analyzes themes/plugins
@@ -261,6 +277,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - [x] **Citation Validation**: Citation-reference relationships, academic integrity
 - [x] **Reference Analysis**: Bibliography quality, DOI validation, CrossRef integration
 - [x] **URL Validation**: Accessibility checking, domain reputation, robots.txt
+- [x] **AI Conversation Analysis**: Cognitive intent classification, learning pattern recognition
 - [x] **Repository Analysis**: GitHub repo analysis, WordPress detection
 - [x] **Rubric System**: Custom rubrics, structured assessment
 - [x] **CLI Interface**: Multiple commands for different analysis types
@@ -275,6 +292,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - [ ] **Wayback Machine**: Archive URL checking
 
 ### 📋 Future Enhancements
+- [ ] **URL Conversation Input**: Direct analysis of conversations from URLs (ChatGPT share links, etc.)
 - [ ] **GUI Application**: Web-based interface
 - [ ] **LMS Integration**: Canvas, Blackboard, Moodle
 - [ ] **Advanced ML Models**: Fine-tuned for educational content
