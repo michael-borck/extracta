@@ -32,6 +32,12 @@ def text():
 
 
 @main.group()
+def code():
+    """Code content analysis commands"""
+    pass
+
+
+@main.group()
 def rubric():
     """Rubric management commands"""
     pass
@@ -260,6 +266,48 @@ def rubric_list():
 
 @rubric.command("create")
 @click.argument("name")
+@code.command("analyze")
+@click.argument("file_path", type=click.Path(exists=True))
+@click.option(
+    "--mode", type=click.Choice(["research", "assessment"]), default="assessment"
+)
+@click.option("--output", "-o", type=click.Path())
+def code_analyze(file_path, mode, output):
+    """Analyze code content"""
+    file_path = Path(file_path)
+
+    # Force code lens
+    from extracta.lenses.code_lens import CodeLens
+
+    lens = CodeLens()
+
+    click.echo(f"Analyzing code {file_path.name}...")
+
+    # Extract content
+    result = lens.extract(file_path)
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        return
+
+    # Analyze content
+    from extracta.analyzers.text_analyzer import TextAnalyzer
+
+    text_analyzer = TextAnalyzer()
+
+    # For code, we analyze the extracted text content
+    if "content" in result["data"]:
+        analysis = text_analyzer.analyze(result["data"]["content"], mode)
+        result["data"]["analysis"] = analysis
+
+    # Output results
+    if output:
+        with open(output, "w") as f:
+            json.dump(result["data"], f, indent=2)
+        click.echo(f"Results saved to {output}")
+    else:
+        click.echo(json.dumps(result["data"], indent=2))
+
+
 @click.option(
     "--type",
     "rubric_type",
