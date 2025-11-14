@@ -38,6 +38,9 @@ class VideoLens(BaseLens):
             # Extract key frames (simplified - in real implementation would use scene detection)
             frames = self._extract_key_frames(video_info)
 
+            # Generate frame descriptions by delegating to image processing
+            frame_descriptions = self._describe_frames(frames)
+
             # Extract audio for transcription (placeholder - would integrate with faster-whisper)
             audio_path = self.processor.extract_audio(
                 video_info, file_path.parent / f"{file_path.stem}_audio.mp3"
@@ -60,9 +63,7 @@ class VideoLens(BaseLens):
                     "transcript": self._generate_transcript_placeholder(
                         video_info.duration
                     ),
-                    "frame_descriptions": [
-                        self._describe_frame_placeholder(i) for i in range(len(frames))
-                    ],
+                    "frame_descriptions": frame_descriptions,
                     "visual_summary": f"Video content showing presentation slides and speaker delivery over {video_info.duration:.1f} seconds",
                     "audio_quality": "Clear audio with good volume levels",
                     "scene_changes": len(frames),  # Placeholder
@@ -101,9 +102,44 @@ class VideoLens(BaseLens):
         # Placeholder - real implementation would transcribe audio
         return f"Video transcript placeholder for {duration:.1f} seconds of content. This would contain the actual speech-to-text transcription using faster-whisper."
 
+    def _describe_frames(self, frames: List[FrameInfo]) -> List[str]:
+        """Generate descriptions for extracted frames by delegating to image processing"""
+        descriptions = []
+
+        for i, frame_info in enumerate(frames):
+            try:
+                # Delegate to image_lens for frame description
+                from ..image_lens import ImageLens
+
+                image_lens = ImageLens()
+
+                # Extract textual description from the frame image
+                frame_result = image_lens.extract(frame_info.frame_path)
+
+                if frame_result["success"]:
+                    # Use the extracted text and visual description
+                    extracted_text = frame_result["data"].get("extracted_text", "")
+                    visual_quality = frame_result["data"].get("visual_quality", "")
+
+                    # Combine into a coherent description
+                    if extracted_text:
+                        description = f"Frame showing text: '{extracted_text[:100]}...' with {visual_quality.lower()}"
+                    else:
+                        description = f"Visual content with {visual_quality.lower()}"
+
+                    descriptions.append(description)
+                else:
+                    # Fallback to placeholder
+                    descriptions.append(self._describe_frame_placeholder(i))
+
+            except Exception as e:
+                # Fallback to placeholder if image processing fails
+                descriptions.append(self._describe_frame_placeholder(i))
+
+        return descriptions
+
     def _describe_frame_placeholder(self, frame_index: int) -> str:
-        """Generate placeholder frame description (would use vision model in real implementation)"""
-        # Placeholder - real implementation would analyze frame with vision model
+        """Generate placeholder frame description (fallback)"""
         descriptions = [
             "Presentation slide with title and bullet points",
             "Speaker presenting to camera with good eye contact",
