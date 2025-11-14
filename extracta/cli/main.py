@@ -136,7 +136,7 @@ def citation_analyze(file_path, mode, output):
     "--provider",
     default="gemini",
     envvar="EXTRACTA_LLM_PROVIDER",
-    help="LLM provider (gemini, openai)",
+    help="LLM provider (gemini, openai, claude, openrouter)",
 )
 @click.option("--api-key", envvar="EXTRACTA_LLM_API_KEY", help="LLM API key")
 @click.option("--model", envvar="EXTRACTA_LLM_MODEL", help="LLM model to use")

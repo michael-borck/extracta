@@ -43,6 +43,10 @@ pip install extracta[text]      # Enhanced text analysis (spaCy, NLTK)
 pip install extracta[image]     # Image analysis with OCR
 pip install extracta[code]      # Code analysis
 pip install extracta[citation]  # Academic integrity (CrossRef, URL validation)
+pip install extracta[conversation]  # AI conversation analysis (Gemini default)
+pip install extracta[openai]    # OpenAI LLM provider
+pip install extracta[claude]    # Anthropic Claude LLM provider
+pip install extracta[openrouter] # OpenRouter unified API
 pip install extracta[api]       # Web API server (FastAPI, Uvicorn)
 pip install extracta[all]       # All features
 ```
@@ -68,8 +72,11 @@ extracta analyze https://github.com/user/repo --mode assessment
 # Comprehensive citation and reference validation
 extracta citation analyze student_paper.pdf --output integrity_check.json
 
-# AI conversation cognitive intent analysis
-extracta citation conversation chatgpt_export.json --output learning_analysis.json
+# AI conversation cognitive intent analysis (with different LLM providers)
+extracta citation conversation chatgpt_export.json --provider gemini --output analysis.json
+extracta citation conversation chat.json --provider claude --model claude-3-sonnet-20240229
+extracta citation conversation chat.json --provider openai --model gpt-4
+extracta citation conversation chat.json --provider openrouter --model anthropic/claude-3-haiku
 
 # Results include:
 # - Citation-reference relationship validation
@@ -106,8 +113,12 @@ reference_result = reference_analyzer.analyze(document_text)
 url_analyzer = URLAnalyzer()
 url_result = url_analyzer.analyze(document_text)
 
-# AI conversation cognitive intent analysis
-conversation_analyzer = ConversationAnalyzer()
+# AI conversation cognitive intent analysis (with different providers)
+conversation_analyzer = ConversationAnalyzer(provider="claude", model="claude-3-sonnet-20240229")
+conversation_result = conversation_analyzer.analyze(conversation_json_data)
+
+# Or use OpenAI
+conversation_analyzer = ConversationAnalyzer(provider="openai", model="gpt-4")
 conversation_result = conversation_analyzer.analyze(conversation_json_data)
 
 # Combined integrity score
@@ -154,7 +165,8 @@ Extracta provides comprehensive tools for detecting academic integrity issues an
 - **Format Validation**: Ensures proper reference formatting and completeness
 
 ### AI Conversation Analysis
-- **Cognitive Intent Classification**: Uses Gemini LLM to classify user prompts as Delegation vs. Scaffolding
+- **Cognitive Intent Classification**: Uses configurable LLM to classify user prompts as Delegation vs. Scaffolding
+- **Multi-Provider Support**: Gemini, OpenAI GPT, Anthropic Claude, OpenRouter unified API
 - **Learning Pattern Recognition**: Analyzes conversation flow for active learning behaviors
 - **Session Quality Scoring**: Provides learning quality assessment (0-100)
 - **Platform Support**: ChatGPT, Claude, Bard, and generic conversation formats
