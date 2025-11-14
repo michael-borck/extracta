@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "extracta"
-version = "0.2.1"
+version = "0.2.2"
 description = "Modular content analysis platform for research, assessment, and academic integrity checking"
 authors = [{name = "Michael Borck", email = "michael@borck.dev"}]
 license = {text = "MIT"}
