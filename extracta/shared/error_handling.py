@@ -303,10 +303,9 @@ class ErrorHandler:
     """Centralized error handling and logging."""
 
     def __init__(self):
-        from .logging_config import LoggerMixin
+        import logging
 
-        self.mixin = LoggerMixin()
-        self.logger = self.mixin.logger
+        self.logger = logging.getLogger("extracta.error_handler")
 
     def handle_error(
         self,

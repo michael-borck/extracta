@@ -722,6 +722,7 @@ def assess_video_content(analysis_results, rubric):
 | `reference_analyzer` | ✅ | Bibliography quality + DOI/CrossRef validation |
 | `url_analyzer` | ✅ | URL accessibility + domain reputation analysis |
 | `conversation_analyzer` | ✅ | AI conversation cognitive intent classification |
+| `security` | ✅ | Input sanitization, URL validation, content filtering |
 | `rubric_manager` | ✅ | Complete rubric system |
 | `feedback_generator` | ✅ | Template-based feedback |
 | `ai_conversation_lens` | ✅ | AI conversation file extraction |
@@ -1722,6 +1723,35 @@ extracta analyze screencast.mp4 --semantic  # Treats video as presentation
 - **Orchestration UIs**: Demonstrate capabilities without full production implementation
 - **Privacy Considerations**: User retains full control over data and analysis results
 - **Modular Design**: Easy to extend or replace components as needs evolve
+
+### Security & Privacy Design
+
+**Input Sanitization & Validation:**
+- Content size limits (10MB text, 2KB URLs, 255 char filenames)
+- Hidden character detection (control chars, zero-width spaces)
+- LLM jailbreak pattern recognition
+- Malicious content detection (steganography, encoding)
+- Filename sanitization and path traversal prevention
+
+**URL Security & SSRF Protection:**
+- Academic domain whitelisting (scholar.google.com, nature.com, etc.)
+- Private network blocking (localhost, 127.0.0.1, 192.168.x.x)
+- Metadata service prevention (AWS/GCP metadata endpoints)
+- Suspicious pattern detection (internal, secret, metadata)
+
+**Privacy & Data Protection:**
+- No built-in data persistence or storage
+- Ephemeral processing with user-controlled output locations
+- No analytics, tracking, or usage monitoring
+- Local processing maintains user privacy
+- Content hashing for integrity verification
+
+**Error Handling & Information Leakage:**
+- Structured error messages without system internals
+- User-friendly error descriptions with actionable suggestions
+- Comprehensive logging for debugging (user-controlled)
+- Graceful degradation on failures
+- Recovery mechanisms for transient errors
 
 ---
 

@@ -7,6 +7,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from ..base_lens import BaseLens
+from ...shared.security import InputSanitizer
 
 
 class AIConversationLens(BaseLens):
@@ -60,8 +61,21 @@ class AIConversationLens(BaseLens):
                     "data": {},
                 }
 
+            # Security check: validate filename
+            sanitizer = InputSanitizer()
+            safe_filename = sanitizer.sanitize_filename(file_path.name)
+            if safe_filename != file_path.name:
+                return {
+                    "success": False,
+                    "error": f"Invalid filename: {file_path.name}",
+                    "data": {},
+                }
+
             # Read file content
             content = self._read_file_content(file_path)
+
+            # Security check: validate content
+            content = sanitizer.sanitize_text_content(content, str(file_path))
 
             # Detect format and extract conversation
             if file_path.suffix.lower() == ".json":

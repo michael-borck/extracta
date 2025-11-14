@@ -12,6 +12,7 @@ Extracta provides a unified interface for extracting and analyzing content from 
 - **🔍 Multiple Analysis Modes**: Research and assessment workflows
 - **📄 Rich Content Support**: Text, images, documents, repositories, presentations, spreadsheets, AI conversations
 - **🎯 Rubric-Based Assessment**: Custom rubrics for structured evaluation
+- **🛡️ Security First**: Input sanitization, URL validation, malicious content detection
 - **🧠 Intelligent Analysis**: Pattern detection, quality scoring, integrity validation, learning pattern recognition
 - **💻 Multiple Interfaces**: CLI, Python API, and Web API
 - **🔧 Modern Python**: Built with uv, ruff, mypy, and pytest
@@ -170,6 +171,13 @@ Extracta provides comprehensive tools for detecting academic integrity issues an
 - **Learning Pattern Recognition**: Analyzes conversation flow for active learning behaviors
 - **Session Quality Scoring**: Provides learning quality assessment (0-100)
 - **Platform Support**: ChatGPT, Claude, Bard, and generic conversation formats
+
+### Security & Privacy
+- **Input Sanitization**: Detects and prevents malicious content, hidden text, and LLM jailbreaks
+- **URL Protection**: SSRF prevention with academic domain whitelisting
+- **Content Validation**: Size limits, encoding validation, and integrity checking
+- **Privacy First**: No data persistence, user-controlled processing, ephemeral analysis
+- **Safe Processing**: Static analysis only, no code execution or external script running
 
 ### Repository Analysis
 - **WordPress Detection**: Identifies WordPress projects and analyzes themes/plugins
