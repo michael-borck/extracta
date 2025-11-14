@@ -165,14 +165,15 @@ Core principle: **Extract once, analyze many ways**
 ### Future Lens Implementations
 
 #### code-lens
-**Status:** ❌ Planned
+**Status:** ✅ Implemented (basic)
 
-- **Input:** Code files (.py, .js, .java, .rb, etc.) or Jupyter notebooks (.ipynb)
+- **Input:** Code files (.py, .js, .java, .rb, .sql, etc.) or Jupyter notebooks (.ipynb)
 - **Extraction:**
-  - Source code as structured AST
+  - Source code as structured AST (Python)
   - Comments and docstrings
   - Function/class definitions
   - Code metrics (complexity, lines of code)
+  - SQL statement parsing and analysis
   - For notebooks: cells, outputs, visualizations
 - **Output:**
   ```json
@@ -192,6 +193,29 @@ Core principle: **Extract once, analyze many ways**
     "documentation": {
       "docstrings": 85,
       "comments": 120
+    }
+  }
+  ```
+- **SQL Analysis Output:**
+  ```json
+  {
+    "language": "sql",
+    "statements": [
+      {
+        "type": "select",
+        "tables": ["users", "posts"],
+        "columns": ["id", "name", "title"],
+        "joins": ["posts"],
+        "conditions": ["active = 1"]
+      }
+    ],
+    "statement_types": {"select": 2, "insert": 1, "create_table": 1},
+    "tables": ["users", "posts", "orders"],
+    "columns": ["id", "name", "email", "active"],
+    "complexity_metrics": {
+      "total_statements": 4,
+      "unique_tables": 3,
+      "join_count": 1
     }
   }
   ```
@@ -622,7 +646,7 @@ def assess_video_content(analysis_results, rubric):
 | `url_analyzer` | ✅ | URL accessibility + domain reputation analysis |
 | `rubric_manager` | ✅ | Complete rubric system |
 | `feedback_generator` | ✅ | Template-based feedback |
-| `code_lens` | ❌ | Not implemented |
+| `code_lens` | ✅ | Basic implementation with SQL analysis |
 | `slide_lens` | ❌ | Not implemented |
 | `web_lens` | ❌ | Not implemented |
 | `repo_lens` | ❌ | Not implemented |
@@ -1176,6 +1200,11 @@ python -m extracta.cli analyze ../test-files/sample.mp3
 - **Status**: Research needed, planned for Phase 2.5
 
 ### Code Lens Advanced Features
+
+#### ✅ Implemented Features
+- **SQL Analysis**: Full statement parsing, table/column extraction, complexity metrics
+- **Multi-language Support**: Python (AST), JavaScript, HTML, CSS, SQL
+- **Jupyter Notebook Support**: Cell analysis, code/markdown separation
 
 #### Immediate Additions
 - **PHP Analysis**: For WordPress theme/plugin assessment
