@@ -63,16 +63,30 @@ class OutputConfig(BaseModel):
     )
 
 
+class LLMConfig(BaseModel):
+    """Configuration for LLM providers."""
+
+    provider: str = Field(default="gemini", description="LLM provider to use")
+    api_key: str = Field(default="", description="API key for the LLM provider")
+    model: str = Field(default="gemini-pro", description="Model to use")
+    temperature: float = Field(default=0.1, description="Temperature for generation")
+    max_tokens: int = Field(default=200, description="Maximum tokens to generate")
+    timeout: int = Field(default=30, description="Request timeout in seconds")
+    retry_attempts: int = Field(default=3, description="Number of retry attempts")
+    retry_delay: float = Field(default=1.0, description="Delay between retries")
+
+
 class ExtractaConfig(BaseModel):
     """Main configuration for extracta."""
 
     app_name: str = Field(default="Extracta", description="Application name")
-    version: str = Field(default="0.1.0", description="Application version")
+    version: str = Field(default="0.2.1", description="Application version")
     debug: bool = Field(default=False, description="Debug mode")
 
     processing: ProcessingConfig = Field(default_factory=ProcessingConfig)
     analysis: AnalysisConfig = Field(default_factory=AnalysisConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
+    llm: LLMConfig = Field(default_factory=LLMConfig)
 
 
 def get_config() -> ExtractaConfig:
@@ -89,8 +103,33 @@ def load_config(config_file: Path | str | None = None) -> ExtractaConfig:
         config.debug = os.getenv("EXTRACTA_DEBUG").lower() in ("true", "1", "yes")
 
     if os.getenv("EXTRACTA_MAX_VIDEO_SIZE_MB"):
-        config.processing.max_video_size_mb = int(
-            os.getenv("EXTRACTA_MAX_VIDEO_SIZE_MB")
-        )
+        max_size = os.getenv("EXTRACTA_MAX_VIDEO_SIZE_MB")
+        if max_size:
+            config.processing.max_video_size_mb = int(max_size)
+
+    # LLM configuration
+    if os.getenv("EXTRACTA_LLM_PROVIDER"):
+        config.llm.provider = os.getenv("EXTRACTA_LLM_PROVIDER")
+
+    if os.getenv("EXTRACTA_LLM_API_KEY"):
+        config.llm.api_key = os.getenv("EXTRACTA_LLM_API_KEY")
+
+    if os.getenv("EXTRACTA_LLM_MODEL"):
+        config.llm.model = os.getenv("EXTRACTA_LLM_MODEL")
+
+    if os.getenv("EXTRACTA_LLM_TEMPERATURE"):
+        temp = os.getenv("EXTRACTA_LLM_TEMPERATURE")
+        if temp:
+            config.llm.temperature = float(temp)
+
+    if os.getenv("EXTRACTA_LLM_MAX_TOKENS"):
+        max_tokens = os.getenv("EXTRACTA_LLM_MAX_TOKENS")
+        if max_tokens:
+            config.llm.max_tokens = int(max_tokens)
+
+    if os.getenv("EXTRACTA_LLM_TIMEOUT"):
+        timeout = os.getenv("EXTRACTA_LLM_TIMEOUT")
+        if timeout:
+            config.llm.timeout = int(timeout)
 
     return config

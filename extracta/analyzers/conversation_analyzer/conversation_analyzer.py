@@ -6,29 +6,60 @@ from typing import Dict, Any, List, Optional
 from pathlib import Path
 
 from ..base_analyzer import BaseAnalyzer
+from ...shared.llm_providers import LLMConfig, registry
 
 
 class ConversationAnalyzer(BaseAnalyzer):
     """Analyzer for classifying cognitive intent in AI conversations using LLM."""
 
     def __init__(
-        self, api_key: Optional[str] = None, system_prompt_path: Optional[str] = None
+        self,
+        provider: Optional[str] = None,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+        system_prompt_path: Optional[str] = None,
     ):
         """Initialize the conversation analyzer.
 
         Args:
-            api_key: LLM API key (defaults to GEMINI_API_KEY env var)
-            system_prompt_path: Path to system prompt file
+            provider: LLM provider name ('gemini', 'openai', etc.)
+            api_key: LLM API key
+            model: Model name to use
+            system_prompt_path: Path to custom system prompt file
         """
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        if not self.api_key:
-            raise ValueError("GEMINI_API_KEY environment variable must be set")
+        # Get configuration from environment or parameters
+        config_provider = provider or os.getenv("EXTRACTA_LLM_PROVIDER", "gemini")
+        config_api_key = (
+            api_key or os.getenv("EXTRACTA_LLM_API_KEY") or os.getenv("GEMINI_API_KEY")
+        )
+        config_model = model or os.getenv("EXTRACTA_LLM_MODEL", "gemini-pro")
+
+        if not config_api_key:
+            raise ValueError(
+                "LLM API key must be provided via EXTRACTA_LLM_API_KEY or GEMINI_API_KEY environment variable"
+            )
+
+        # Create LLM configuration
+        self.llm_config = LLMConfig(
+            api_key=config_api_key,
+            model=config_model,
+            temperature=0.1,  # Low temperature for consistent classification
+            max_tokens=200,
+            timeout=30,
+            retry_attempts=3,
+            retry_delay=1.0,
+        )
+
+        # Create LLM provider
+        self.llm_provider = registry.create_provider(config_provider, self.llm_config)
+        if not self.llm_provider:
+            available_providers = registry.list_providers()
+            raise ValueError(
+                f"Unknown LLM provider '{config_provider}'. Available: {available_providers}"
+            )
 
         # Load system prompt
         self.system_prompt = self._load_system_prompt(system_prompt_path)
-
-        # Initialize LLM client (lazy loading)
-        self._llm_client = None
 
     def _load_system_prompt(self, prompt_path: Optional[str] = None) -> str:
         """Load the system prompt from file or use default."""
@@ -63,19 +94,6 @@ Use the following taxonomy for "intent_category" and "intent_subcategory":
 
 Provide a "confidence" score between 0.0 and 1.0.
 Provide a brief "rationale" (1 sentence) for your classification."""
-
-    def _initialize_llm_client(self):
-        """Initialize the LLM client (lazy loading)."""
-        if self._llm_client is None:
-            try:
-                import google.generativeai as genai
-
-                genai.configure(api_key=self.api_key)
-                self._llm_client = genai.GenerativeModel("gemini-pro")
-            except ImportError:
-                raise ImportError(
-                    "google-generativeai package is required for conversation analysis"
-                )
 
     def analyze(self, content: str, mode: str = "assessment") -> Dict[str, Any]:
         """Analyze conversation data for cognitive intent patterns.
@@ -148,22 +166,14 @@ Provide a brief "rationale" (1 sentence) for your classification."""
             Classification dictionary or None if classification fails
         """
         try:
-            self._initialize_llm_client()
-
             # Prepare the prompt for the LLM
             full_prompt = f'{self.system_prompt}\n\n---\nSTUDENT PROMPT TO CLASSIFY:\n"{prompt_text}"'
 
-            # Configure for JSON output
-            generation_config = {
-                "temperature": 0.1,  # Low temperature for consistent classification
-                "top_p": 0.8,
-                "top_k": 40,
-                "max_output_tokens": 200,
-            }
-
-            # Make the API call
-            response = self._llm_client.generate_content(
-                full_prompt, generation_config=generation_config
+            # Generate response using the LLM provider
+            response = self.llm_provider.generate_response(
+                full_prompt,
+                temperature=self.llm_config.temperature,
+                max_tokens=self.llm_config.max_tokens,
             )
 
             # Parse JSON response

@@ -132,11 +132,18 @@ def citation_analyze(file_path, mode, output):
 @citation.command("conversation")
 @click.argument("file_path", type=click.Path(exists=True))
 @click.option("--output", "-o", type=click.Path())
-@click.option("--api-key", envvar="GEMINI_API_KEY", help="Gemini API key")
+@click.option(
+    "--provider",
+    default="gemini",
+    envvar="EXTRACTA_LLM_PROVIDER",
+    help="LLM provider (gemini, openai)",
+)
+@click.option("--api-key", envvar="EXTRACTA_LLM_API_KEY", help="LLM API key")
+@click.option("--model", envvar="EXTRACTA_LLM_MODEL", help="LLM model to use")
 @click.option(
     "--system-prompt", type=click.Path(), help="Path to custom system prompt file"
 )
-def conversation_analyze(file_path, output, api_key, system_prompt):
+def conversation_analyze(file_path, output, provider, api_key, model, system_prompt):
     """Analyze AI conversation for cognitive intent patterns"""
     from extracta.lenses.ai_conversation_lens import AIConversationLens
     from extracta.analyzers.conversation_analyzer import ConversationAnalyzer
@@ -155,9 +162,12 @@ def conversation_analyze(file_path, output, api_key, system_prompt):
     # Analyze conversation
     try:
         analyzer = ConversationAnalyzer(
-            api_key=api_key, system_prompt_path=system_prompt
+            provider=provider,
+            api_key=api_key,
+            model=model,
+            system_prompt_path=system_prompt,
         )
-        click.echo("Analyzing cognitive intent patterns...")
+        click.echo(f"Analyzing cognitive intent patterns using {provider}...")
 
         # Convert conversation data to JSON string for analyzer
         conversation_json = json.dumps(result["data"])
@@ -179,8 +189,11 @@ def conversation_analyze(file_path, output, api_key, system_prompt):
 
     except Exception as e:
         click.echo(f"Analysis error: {e}", err=True)
-        if "GEMINI_API_KEY" not in str(e):
-            click.echo("Make sure GEMINI_API_KEY environment variable is set", err=True)
+        if "API key" in str(e):
+            click.echo(
+                f"Make sure {provider.upper()}_API_KEY or EXTRACTA_LLM_API_KEY environment variable is set",
+                err=True,
+            )
 
 
 @main.command()
