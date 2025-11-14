@@ -129,6 +129,60 @@ def citation_analyze(file_path, mode, output):
         click.echo(json.dumps(combined_result, indent=2))
 
 
+@citation.command("conversation")
+@click.argument("file_path", type=click.Path(exists=True))
+@click.option("--output", "-o", type=click.Path())
+@click.option("--api-key", envvar="GEMINI_API_KEY", help="Gemini API key")
+@click.option(
+    "--system-prompt", type=click.Path(), help="Path to custom system prompt file"
+)
+def conversation_analyze(file_path, output, api_key, system_prompt):
+    """Analyze AI conversation for cognitive intent patterns"""
+    from extracta.lenses.ai_conversation_lens import AIConversationLens
+    from extracta.analyzers.conversation_analyzer import ConversationAnalyzer
+
+    file_path = Path(file_path)
+
+    # Extract conversation data
+    lens = AIConversationLens()
+    click.echo(f"Extracting conversation from {file_path.name}...")
+
+    result = lens.extract(file_path)
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        return
+
+    # Analyze conversation
+    try:
+        analyzer = ConversationAnalyzer(
+            api_key=api_key, system_prompt_path=system_prompt
+        )
+        click.echo("Analyzing cognitive intent patterns...")
+
+        # Convert conversation data to JSON string for analyzer
+        conversation_json = json.dumps(result["data"])
+        analysis_result = analyzer.analyze(conversation_json)
+
+        # Combine results
+        combined_result = {
+            "conversation_extraction": result["data"],
+            "cognitive_analysis": analysis_result["conversation_analysis"],
+        }
+
+        # Output results
+        if output:
+            with open(output, "w") as f:
+                json.dump(combined_result, f, indent=2)
+            click.echo(f"Results saved to {output}")
+        else:
+            click.echo(json.dumps(combined_result, indent=2))
+
+    except Exception as e:
+        click.echo(f"Analysis error: {e}", err=True)
+        if "GEMINI_API_KEY" not in str(e):
+            click.echo("Make sure GEMINI_API_KEY environment variable is set", err=True)
+
+
 @main.command()
 @click.argument("file_path", type=click.Path(exists=True))
 @click.option(

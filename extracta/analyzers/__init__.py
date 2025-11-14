@@ -32,3 +32,10 @@ def get_url_analyzer():
     from .url_analyzer import URLAnalyzer
 
     return URLAnalyzer()
+
+
+def get_conversation_analyzer():
+    """Get conversation analyzer for AI conversation cognitive intent classification"""
+    from .conversation_analyzer import ConversationAnalyzer
+
+    return ConversationAnalyzer()

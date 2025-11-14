@@ -326,6 +326,42 @@ Core principle: **Extract once, analyze many ways**
 
 ---
 
+#### ai-conversation-lens
+**Status:** ✅ Implemented
+
+- **Input:** AI conversation files (JSON exports, text logs, markdown)
+- **Extraction:**
+  - ChatGPT, Claude, Bard, and generic conversation format support
+  - Message role detection (user/assistant)
+  - Conversation structure parsing
+  - Metadata extraction (platform, title, timestamps)
+- **Output:**
+  ```json
+  {
+    "platform": "chatgpt",
+    "title": "Python Debugging Session",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Why does my Python code give a NameError?",
+        "timestamp": "2024-01-15T10:30:00Z"
+      },
+      {
+        "role": "assistant",
+        "content": "The NameError occurs when you try to use a variable that hasn't been defined...",
+        "timestamp": "2024-01-15T10:30:05Z"
+      }
+    ],
+    "message_count": 12,
+    "file_path": "/path/to/conversation.json",
+    "extraction_timestamp": "2024-01-15T11:00:00Z"
+  }
+  ```
+- **Delegate to:**
+  - `conversation_analyzer` for cognitive intent classification
+
+---
+
 ## Layer 2: Content Analyzers
 
 ### Currently Implemented Analyzers
@@ -516,6 +552,47 @@ Core principle: **Extract once, analyze many ways**
 
 ---
 
+#### conversation-analyzer
+**Status:** ✅ Implemented
+
+**Input:** AI conversation data (extracted by ai-conversation-lens)
+
+**Analysis:**
+- Cognitive intent classification using Gemini LLM
+- Delegation vs. Scaffolding behavior detection
+- Session-level learning pattern analysis
+- Academic integrity assessment for AI-assisted work
+
+**Output:**
+```json
+{
+  "conversation_analysis": {
+    "total_prompts": 15,
+    "classified_prompts": 15,
+    "session_metrics": {
+      "total_prompts": 15,
+      "intent_counts": {"Delegation": 5, "Scaffolding": 8, "Other": 2},
+      "scaffolding_ratio": 0.615,
+      "intent_sequence": ["Scaffolding", "Delegation", ...],
+      "subcategory_breakdown": {"Explanation": 4, "Ideation": 3, ...},
+      "average_confidence": 0.87,
+      "learning_patterns": {
+        "consistent_scaffolding": true,
+        "learning_progression": "strong"
+      }
+    },
+    "learning_assessment": {
+      "learning_quality_score": 82.3,
+      "learning_level": "Good",
+      "description": "Moderate evidence of learning engagement",
+      "recommendations": [...]
+    }
+  }
+}
+```
+
+---
+
 ### Future Analyzer Implementations
 
 #### code-analyzer
@@ -644,9 +721,11 @@ def assess_video_content(analysis_results, rubric):
 | `citation_analyzer` | ✅ | Citation-reference validation + academic integrity |
 | `reference_analyzer` | ✅ | Bibliography quality + DOI/CrossRef validation |
 | `url_analyzer` | ✅ | URL accessibility + domain reputation analysis |
+| `conversation_analyzer` | ✅ | AI conversation cognitive intent classification |
 | `rubric_manager` | ✅ | Complete rubric system |
 | `feedback_generator` | ✅ | Template-based feedback |
-| `code_lens` | ✅ | Basic implementation with SQL analysis |
+| `ai_conversation_lens` | ✅ | AI conversation file extraction |
+| `code_lens` | ✅ | Multi-language code analysis + SQL support |
 | `slide_lens` | ❌ | Not implemented |
 | `web_lens` | ❌ | Not implemented |
 | `repo_lens` | ❌ | Not implemented |
@@ -682,6 +761,7 @@ def assess_video_content(analysis_results, rubric):
 - **citation_analyzer:** Regex patterns, CrossRef API, academic integrity scoring
 - **reference_analyzer:** DOI validation, URL checking, bibliography quality assessment
 - **url_analyzer:** HTTP validation, domain reputation, robots.txt compliance
+- **conversation_analyzer:** Gemini LLM API, cognitive intent classification
 - **code_analyzer:** radon, pylint, flake8 (planned)
 - **accessibility_analyzer:** axe-core, webaim (planned)
 
