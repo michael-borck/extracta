@@ -175,6 +175,8 @@ class CodeLens(BaseLens):
             return self._analyze_html(content, file_path)
         elif language == "css":
             return self._analyze_css(content, file_path)
+        elif language == "sql":
+            return self._analyze_sql(content, file_path)
         else:
             # Generic analysis for unsupported languages
             return self._analyze_generic(content, language)
@@ -366,6 +368,405 @@ class CodeLens(BaseLens):
         }
 
         return analysis
+
+    def _analyze_sql(self, content: str, file_path: Path) -> Dict[str, Any]:
+        """Analyze SQL content with basic parsing and structure analysis."""
+        analysis = {
+            "statements": [],
+            "statement_types": {},
+            "tables": set(),
+            "columns": set(),
+            "functions": set(),
+            "joins": [],
+            "conditions": [],
+            "syntax_issues": [],
+            "complexity_metrics": {},
+            "security_concerns": [],
+        }
+
+        try:
+            # Split content into individual statements
+            statements = self._split_sql_statements(content)
+
+            for stmt in statements:
+                stmt_info = self._analyze_sql_statement(stmt.strip())
+                if stmt_info:
+                    # Convert sets to lists for JSON serialization
+                    stmt_info["tables"] = list(stmt_info.get("tables", []))
+                    stmt_info["columns"] = list(stmt_info.get("columns", []))
+                    stmt_info["functions"] = list(stmt_info.get("functions", []))
+
+                    analysis["statements"].append(stmt_info)
+
+                    # Aggregate statistics
+                    stmt_type = stmt_info.get("type", "unknown")
+                    analysis["statement_types"][stmt_type] = (
+                        analysis["statement_types"].get(stmt_type, 0) + 1
+                    )
+
+                    # Collect tables, columns, etc.
+                    analysis["tables"].update(stmt_info.get("tables", []))
+                    analysis["columns"].update(stmt_info.get("columns", []))
+                    analysis["functions"].update(stmt_info.get("functions", []))
+                    analysis["joins"].extend(stmt_info.get("joins", []))
+                    analysis["conditions"].extend(stmt_info.get("conditions", []))
+
+            # Convert sets to lists for JSON serialization
+            analysis["tables"] = list(analysis["tables"])
+            analysis["columns"] = list(analysis["columns"])
+            analysis["functions"] = list(analysis["functions"])
+
+            # Calculate complexity metrics
+            analysis["complexity_metrics"] = {
+                "total_statements": len(analysis["statements"]),
+                "unique_tables": len(analysis["tables"]),
+                "unique_columns": len(analysis["columns"]),
+                "join_count": len(analysis["joins"]),
+                "condition_count": len(analysis["conditions"]),
+                "avg_statement_length": sum(
+                    len(s.get("raw_sql", "")) for s in analysis["statements"]
+                )
+                / max(len(analysis["statements"]), 1),
+            }
+
+            # Basic security analysis
+            analysis["security_concerns"] = self._analyze_sql_security(content)
+
+        except Exception as e:
+            analysis["parse_error"] = str(e)
+
+        return analysis
+
+    def _split_sql_statements(self, content: str) -> List[str]:
+        """Split SQL content into individual statements."""
+        # Remove comments first
+        content = self._remove_sql_comments(content)
+
+        # Split on semicolons, but be careful with semicolons in strings
+        statements = []
+        current_stmt = ""
+        in_string = False
+        string_char = None
+
+        for char in content:
+            if not in_string:
+                if char in ("'", '"'):
+                    in_string = True
+                    string_char = char
+                elif char == ";":
+                    if current_stmt.strip():
+                        statements.append(current_stmt.strip())
+                    current_stmt = ""
+                    continue
+            else:
+                if char == string_char and (
+                    not current_stmt or current_stmt[-1] != "\\"
+                ):
+                    in_string = False
+                    string_char = None
+
+            current_stmt += char
+
+        # Add final statement if exists
+        if current_stmt.strip():
+            statements.append(current_stmt.strip())
+
+        return statements
+
+    def _remove_sql_comments(self, content: str) -> str:
+        """Remove SQL comments (both -- and /* */ style)."""
+        # Remove single-line comments
+        content = re.sub(r"--.*$", "", content, flags=re.MULTILINE)
+
+        # Remove multi-line comments
+        content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+
+        return content
+
+    def _analyze_sql_statement(self, stmt: str) -> Optional[Dict[str, Any]]:
+        """Analyze a single SQL statement."""
+        if not stmt.strip():
+            return None
+
+        stmt_upper = stmt.upper()
+        analysis = {
+            "raw_sql": stmt,
+            "type": "unknown",
+            "tables": set(),
+            "columns": set(),
+            "functions": set(),
+            "joins": [],
+            "conditions": [],
+        }
+
+        # Determine statement type
+        if stmt_upper.startswith("SELECT"):
+            analysis["type"] = "select"
+            self._analyze_select_statement(stmt, analysis)
+        elif stmt_upper.startswith("INSERT"):
+            analysis["type"] = "insert"
+            self._analyze_insert_statement(stmt, analysis)
+        elif stmt_upper.startswith("UPDATE"):
+            analysis["type"] = "update"
+            self._analyze_update_statement(stmt, analysis)
+        elif stmt_upper.startswith("DELETE"):
+            analysis["type"] = "delete"
+            self._analyze_delete_statement(stmt, analysis)
+        elif stmt_upper.startswith(
+            ("CREATE TABLE", "CREATE TEMP TABLE", "CREATE TEMPORARY TABLE")
+        ):
+            analysis["type"] = "create_table"
+            self._analyze_create_table_statement(stmt, analysis)
+        elif stmt_upper.startswith("ALTER TABLE"):
+            analysis["type"] = "alter_table"
+            self._analyze_alter_table_statement(stmt, analysis)
+        elif stmt_upper.startswith("DROP TABLE"):
+            analysis["type"] = "drop_table"
+            self._analyze_drop_table_statement(stmt, analysis)
+        elif stmt_upper.startswith("CREATE INDEX"):
+            analysis["type"] = "create_index"
+        elif stmt_upper.startswith("CREATE VIEW"):
+            analysis["type"] = "create_view"
+
+        return analysis
+
+    def _analyze_select_statement(self, stmt: str, analysis: Dict[str, Any]) -> None:
+        """Analyze SELECT statement."""
+        # Extract tables from FROM clause
+        from_match = re.search(
+            r"\bFROM\s+(.+?)(?:\bWHERE\b|\bGROUP\s+BY\b|\bORDER\s+BY\b|\bLIMIT\b|$)",
+            stmt,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if from_match:
+            from_clause = from_match.group(1)
+            tables = self._extract_table_names(from_clause)
+            analysis["tables"].update(tables)
+
+        # Extract columns from SELECT clause
+        select_match = re.search(
+            r"\bSELECT\s+(.+?)\bFROM\b", stmt, re.IGNORECASE | re.DOTALL
+        )
+        if select_match:
+            select_clause = select_match.group(1)
+            columns = self._extract_column_names(select_clause)
+            analysis["columns"].update(columns)
+
+        # Extract JOINs
+        join_pattern = r"\b(INNER\s+)?(?:LEFT|RIGHT|FULL|OUTER)?\s*JOIN\s+(\w+)"
+        joins = re.findall(join_pattern, stmt, re.IGNORECASE)
+        analysis["joins"].extend([join[1] for join in joins])
+
+        # Extract WHERE conditions
+        where_match = re.search(
+            r"\bWHERE\s+(.+?)(?:\bGROUP\s+BY\b|\bORDER\s+BY\b|\bLIMIT\b|$)",
+            stmt,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if where_match:
+            where_clause = where_match.group(1)
+            conditions = self._extract_conditions(where_clause)
+            analysis["conditions"].extend(conditions)
+
+        # Extract functions
+        functions = self._extract_sql_functions(stmt)
+        analysis["functions"].update(functions)
+
+    def _analyze_insert_statement(self, stmt: str, analysis: Dict[str, Any]) -> None:
+        """Analyze INSERT statement."""
+        # Extract table name
+        table_match = re.search(r"\bINSERT\s+INTO\s+(\w+)", stmt, re.IGNORECASE)
+        if table_match:
+            analysis["tables"].add(table_match.group(1))
+
+        # Extract columns
+        columns_match = re.search(r"\(\s*([^)]+)\s*\)", stmt)
+        if columns_match:
+            columns = self._extract_column_names(columns_match.group(1))
+            analysis["columns"].update(columns)
+
+    def _analyze_update_statement(self, stmt: str, analysis: Dict[str, Any]) -> None:
+        """Analyze UPDATE statement."""
+        # Extract table name
+        table_match = re.search(r"\bUPDATE\s+(\w+)", stmt, re.IGNORECASE)
+        if table_match:
+            analysis["tables"].add(table_match.group(1))
+
+        # Extract SET columns
+        set_match = re.search(
+            r"\bSET\s+(.+?)(?:\bWHERE\b|$)", stmt, re.IGNORECASE | re.DOTALL
+        )
+        if set_match:
+            set_clause = set_match.group(1)
+            columns = self._extract_column_names(set_clause)
+            analysis["columns"].update(columns)
+
+        # Extract WHERE conditions
+        where_match = re.search(r"\bWHERE\s+(.+?)$", stmt, re.IGNORECASE | re.DOTALL)
+        if where_match:
+            conditions = self._extract_conditions(where_match.group(1))
+            analysis["conditions"].extend(conditions)
+
+    def _analyze_delete_statement(self, stmt: str, analysis: Dict[str, Any]) -> None:
+        """Analyze DELETE statement."""
+        # Extract table name
+        table_match = re.search(r"\bDELETE\s+FROM\s+(\w+)", stmt, re.IGNORECASE)
+        if table_match:
+            analysis["tables"].add(table_match.group(1))
+
+        # Extract WHERE conditions
+        where_match = re.search(r"\bWHERE\s+(.+?)$", stmt, re.IGNORECASE | re.DOTALL)
+        if where_match:
+            conditions = self._extract_conditions(where_match.group(1))
+            analysis["conditions"].extend(conditions)
+
+    def _analyze_create_table_statement(
+        self, stmt: str, analysis: Dict[str, Any]
+    ) -> None:
+        """Analyze CREATE TABLE statement."""
+        # Extract table name
+        table_match = re.search(
+            r"\bCREATE\s+(?:TEMP\s+)?TABLE\s+(\w+)", stmt, re.IGNORECASE
+        )
+        if table_match:
+            analysis["tables"].add(table_match.group(1))
+
+        # Extract column definitions
+        columns_match = re.search(r"\(\s*(.+)\s*\)", stmt, re.DOTALL)
+        if columns_match:
+            column_defs = columns_match.group(1)
+            # Extract column names (simplified)
+            column_names = re.findall(r"(\w+)\s+[\w\s()]+(?:,|$)", column_defs)
+            analysis["columns"].update(column_names)
+
+    def _analyze_alter_table_statement(
+        self, stmt: str, analysis: Dict[str, Any]
+    ) -> None:
+        """Analyze ALTER TABLE statement."""
+        # Extract table name
+        table_match = re.search(r"\bALTER\s+TABLE\s+(\w+)", stmt, re.IGNORECASE)
+        if table_match:
+            analysis["tables"].add(table_match.group(1))
+
+    def _analyze_drop_table_statement(
+        self, stmt: str, analysis: Dict[str, Any]
+    ) -> None:
+        """Analyze DROP TABLE statement."""
+        # Extract table name
+        table_match = re.search(r"\bDROP\s+TABLE\s+(\w+)", stmt, re.IGNORECASE)
+        if table_match:
+            analysis["tables"].add(table_match.group(1))
+
+    def _extract_table_names(self, clause: str) -> List[str]:
+        """Extract table names from SQL clause."""
+        # Simple extraction - could be enhanced for aliases, subqueries, etc.
+        tables = re.findall(r"\b(\w+)\b", clause)
+        # Filter out SQL keywords
+        sql_keywords = {
+            "SELECT",
+            "FROM",
+            "WHERE",
+            "JOIN",
+            "INNER",
+            "LEFT",
+            "RIGHT",
+            "FULL",
+            "OUTER",
+            "ON",
+            "GROUP",
+            "BY",
+            "ORDER",
+            "HAVING",
+            "LIMIT",
+            "AS",
+            "AND",
+            "OR",
+            "NOT",
+            "IN",
+            "IS",
+            "NULL",
+            "LIKE",
+            "BETWEEN",
+        }
+        return [
+            table
+            for table in tables
+            if table.upper() not in sql_keywords and len(table) > 1
+        ]
+
+    def _extract_column_names(self, clause: str) -> List[str]:
+        """Extract column names from SQL clause."""
+        # Extract identifiers that could be columns
+        columns = re.findall(r"\b(\w+)\b", clause)
+        # Filter out SQL keywords and functions
+        sql_keywords = {
+            "SELECT",
+            "FROM",
+            "WHERE",
+            "AS",
+            "AND",
+            "OR",
+            "NOT",
+            "IN",
+            "IS",
+            "NULL",
+            "LIKE",
+            "BETWEEN",
+            "COUNT",
+            "SUM",
+            "AVG",
+            "MIN",
+            "MAX",
+            "DISTINCT",
+            "ALL",
+        }
+        return [
+            col for col in columns if col.upper() not in sql_keywords and len(col) > 1
+        ]
+
+    def _extract_conditions(self, clause: str) -> List[str]:
+        """Extract WHERE conditions."""
+        # Simple extraction of comparison conditions
+        conditions = re.findall(r'\w+\s*[=<>!]+\s*[\'"\w]+', clause)
+        return conditions
+
+    def _extract_sql_functions(self, stmt: str) -> List[str]:
+        """Extract SQL function calls."""
+        # Common SQL functions
+        functions = re.findall(
+            r"\b(COUNT|SUM|AVG|MIN|MAX|CONCAT|SUBSTRING|DATE|NOW|CURRENT_TIMESTAMP|COALESCE|NULLIF)\s*\(",
+            stmt,
+            re.IGNORECASE,
+        )
+        return list(set(functions))
+
+    def _analyze_sql_security(self, content: str) -> List[str]:
+        """Basic SQL security analysis."""
+        concerns = []
+
+        # Check for potential SQL injection patterns (in application code, not SQL)
+        if "SELECT" in content.upper() and (
+            "+" in content or "format(" in content.lower()
+        ):
+            concerns.append(
+                "Potential string concatenation in SELECT - consider parameterized queries"
+            )
+
+        # Check for dangerous operations
+        dangerous_patterns = [
+            (r"\bDROP\s+DATABASE\b", "DROP DATABASE statement found"),
+            (r"\bTRUNCATE\s+TABLE\b", "TRUNCATE TABLE can be dangerous"),
+            (
+                r"\bDELETE\s+FROM\s+\w+\s+WHERE\s+1\s*=\s*1",
+                "DELETE without specific WHERE clause",
+            ),
+        ]
+
+        for pattern, message in dangerous_patterns:
+            if re.search(pattern, content, re.IGNORECASE):
+                concerns.append(message)
+
+        return concerns
 
     def _analyze_generic(self, content: str, language: str) -> Dict[str, Any]:
         """Generic analysis for unsupported languages."""
