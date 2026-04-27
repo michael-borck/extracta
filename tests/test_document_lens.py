@@ -1,6 +1,5 @@
 """Tests for DocumentLens — document text extraction via markitdown."""
 
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -62,6 +61,12 @@ class TestDocumentLensExtract:
     def test_extract_string_path_accepted(self, lens: DocumentLens, sample_txt: Path):
         result = lens.extract(str(sample_txt))
         assert result["success"] is True
+        assert "raw_content" in result["data"]
+
+    def test_extract_missing_file_returns_failure(self, lens: DocumentLens, tmp_path: Path):
+        result = lens.extract(tmp_path / "does_not_exist.txt")
+        assert result["success"] is False
+        assert "error" in result
 
     def test_extract_pdf(self, lens: DocumentLens, sample_pdf: Path | None):
         if sample_pdf is None:
