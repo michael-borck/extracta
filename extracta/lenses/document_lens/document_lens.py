@@ -5,9 +5,6 @@ from markitdown import MarkItDown
 
 from ..base_lens import BaseLens
 
-_markitdown = MarkItDown()
-
-
 class DocumentLens(BaseLens):
     """Extracts text content from document files via markitdown.
 
@@ -29,6 +26,9 @@ class DocumentLens(BaseLens):
         # Web / notebook
         ".html", ".htm", ".epub", ".ipynb", ".xml",
     }
+
+    def __init__(self) -> None:
+        self._markitdown = MarkItDown()
 
     def extract(self, file_path: Path | str) -> dict[str, Any]:
         """Extract text content from a document file.
@@ -53,15 +53,9 @@ class DocumentLens(BaseLens):
                     "data": {},
                 }
 
-            result = _markitdown.convert(file_path)
+            file_size = file_path.stat().st_size
+            result = self._markitdown.convert(file_path)
             content = result.text_content or ""
-
-            if not content.strip():
-                return {
-                    "success": False,
-                    "error": "No text could be extracted from file",
-                    "data": {},
-                }
 
             return {
                 "success": True,
@@ -69,9 +63,9 @@ class DocumentLens(BaseLens):
                     "content_type": "text",
                     "raw_content": content,
                     "file_path": str(file_path),
-                    "file_size": file_path.stat().st_size,
+                    "file_size": file_size,
                 },
             }
 
         except Exception as e:
-            return {"success": False, "error": str(e), "data": {}}
+            return {"success": False, "error": repr(e), "data": {}}
