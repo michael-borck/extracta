@@ -1,5 +1,9 @@
 # Extracta
 
+> **Deprecated.** This package is no longer maintained.
+> For document text extraction use [markitdown](https://github.com/microsoft/markitdown) directly.
+> Existing installs continue to work but no further updates will be published.
+
 <!-- BADGES:START -->
 [![edtech](https://img.shields.io/badge/-edtech-4caf50?style=flat-square)](https://github.com/topics/edtech) [![academic-integrity](https://img.shields.io/badge/-academic--integrity-blue?style=flat-square)](https://github.com/topics/academic-integrity) [![ai-analysis](https://img.shields.io/badge/-ai--analysis-blue?style=flat-square)](https://github.com/topics/ai-analysis) [![api](https://img.shields.io/badge/-api-blue?style=flat-square)](https://github.com/topics/api) [![citation-analysis](https://img.shields.io/badge/-citation--analysis-blue?style=flat-square)](https://github.com/topics/citation-analysis) [![cli-tool](https://img.shields.io/badge/-cli--tool-blue?style=flat-square)](https://github.com/topics/cli-tool) [![content-analysis](https://img.shields.io/badge/-content--analysis-blue?style=flat-square)](https://github.com/topics/content-analysis) [![modular-architecture](https://img.shields.io/badge/-modular--architecture-blue?style=flat-square)](https://github.com/topics/modular-architecture) [![plagiarism-detection](https://img.shields.io/badge/-plagiarism--detection-blue?style=flat-square)](https://github.com/topics/plagiarism-detection) [![python](https://img.shields.io/badge/-python-3776ab?style=flat-square)](https://github.com/topics/python)
 <!-- BADGES:END -->
